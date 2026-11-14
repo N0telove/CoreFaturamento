@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CoreFaturamento.ConsoleApp/CoreFaturamento.ConsoleApp.csproj" />
+  <Project Path="CoreFaturamento.Domain/CoreFaturamento.Domain.csproj" />
+  <Project Path="CoreFaturamento.Infra/CoreFaturamento.Infra.csproj" />
+</Solution>

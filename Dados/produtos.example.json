@@ -1,0 +1,23 @@
+[
+  {
+    "ProdutoId": 1,
+    "CodigoSKU": "NTB-DELL-001",
+    "Nome": "Notebook Dell Inspiron 15",
+    "PrecoUnitario": 3500.00,
+    "QuantidadeEstoque": 10
+  },
+  {
+    "ProdutoId": 2,
+    "CodigoSKU": "MSE-LOG-002",
+    "Nome": "Mouse Sem Fio Logitech MX Master",
+    "PrecoUnitario": 450.50,
+    "QuantidadeEstoque": 25
+  },
+  {
+    "ProdutoId": 3,
+    "CodigoSKU": "TCL-MEC-003",
+    "Nome": "Teclado Mecânico RGB",
+    "PrecoUnitario": 289.90,
+    "QuantidadeEstoque": 0
+  }
+]
