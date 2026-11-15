@@ -13,16 +13,15 @@ namespace CoreFaturamento.ConsoleApp.UI;
 
 public class MenuPrincipal
 {
-    private IReadOnlyCollection<ProdutoDto> _produtos;
     private List<(int ProdutoId, int Quantidade)> _lista = new();
     private int _pedidoId;
     private readonly PedidoServico _pedidoServico;
+    private IReadOnlyCollection<ProdutoDto> Produtos => _pedidoServico.ListarProdutos();
 
     public MenuPrincipal(PedidoServico pedidoServico)
     {
         _pedidoServico = Guard.Against.Null(pedidoServico, nameof(pedidoServico));
 
-        _produtos = _pedidoServico.ListarProdutos();
     }
 
     public void MenuInicial()
@@ -103,7 +102,7 @@ public class MenuPrincipal
     private void ListarProdutos()
     {
         Console.WriteLine("Produtos disponíveis:");
-        foreach (var produto in _produtos)
+        foreach (var produto in Produtos)
         {
             Console.WriteLine($"Produto Id: {produto.ProdutoId}.");
             Console.WriteLine($"Produto: {produto.Nome}.");

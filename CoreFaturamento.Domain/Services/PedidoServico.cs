@@ -18,14 +18,16 @@ public class PedidoServico
         decimal PrecoUnitario,
         int QuantidadeEstoque
         );
-    private readonly Dictionary<int, Produto> _catalogo;
-    private readonly Dictionary<int, Pedido> _pedidos;
+    private Dictionary<int, Produto> _catalogo;
+    private Dictionary<int, Pedido> _pedidos;
+    private readonly IProdutoRepository _produtoRepo;
+    private readonly IPedidoRepository _pedidoRepo;
     private readonly IUnitOfWork _unitOfWork;
 
     public PedidoServico(IProdutoRepository produtoRepo, IPedidoRepository pedidoRepo, IUnitOfWork unitOfWork)
     {
-        Guard.Against.Null(produtoRepo, nameof(produtoRepo));
-        Guard.Against.Null(pedidoRepo, nameof(pedidoRepo));
+        _produtoRepo = Guard.Against.Null(produtoRepo, nameof(produtoRepo));
+        _pedidoRepo = Guard.Against.Null(pedidoRepo, nameof(pedidoRepo));
 
         _unitOfWork = Guard.Against.Null(unitOfWork, nameof(unitOfWork));
         _catalogo = produtoRepo.ObterTodos();
@@ -54,7 +56,7 @@ public class PedidoServico
             produto.ReporEstoque(item.Quantidade);
         }
 
-        _unitOfWork.SalvarAlteracoes(_catalogo, _pedidos);
+        PersistirOuReverter();
     }
      
     public int CriarPedido(List<(int ProdutoId, int Quantidade)> itensDesejados)
@@ -92,13 +94,20 @@ public class PedidoServico
 
         _pedidos.Add(novoPedido.PedidoId, novoPedido);
 
-        _unitOfWork.SalvarAlteracoes(_catalogo, _pedidos);
+        PersistirOuReverter();
 
         return pedidoId;
     }
 
     public void AdicionarItem(int pedidoId, List<(int produtoId, int quantidade)> itens)
     {
+        itens = itens.GroupBy(x => x.produtoId)
+                    .Select(grupo => (
+                        ProdutoId: grupo.Key,
+                        Quantidade: grupo.Sum(item => item.quantidade)
+                        ))
+                    .ToList();
+
         foreach ((int produtoId, int quantidade) in itens)
         {
             if (!_pedidos.TryGetValue(pedidoId, out var pedido))
@@ -113,6 +122,20 @@ public class PedidoServico
             pedido.AdicionarItem(produto, quantidade);
         }
 
-        _unitOfWork.SalvarAlteracoes(_catalogo, _pedidos);
+        PersistirOuReverter();
+    }
+
+    private void PersistirOuReverter()
+    {
+        try
+        {
+            _unitOfWork.SalvarAlteracoes(_catalogo, _pedidos);
+        }
+        catch
+        {
+            _catalogo = _produtoRepo.ObterTodos();
+            _pedidos = _pedidoRepo.ObterTodos();
+            throw;
+        }
     }
 }
