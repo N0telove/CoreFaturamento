@@ -33,9 +33,9 @@ public class ProdutoRepositoryJson : IProdutoRepository
         if (string.IsNullOrWhiteSpace(jsonTexto))
             return new Dictionary<int, Produto>();
 
-        var produtos = JsonSerializer.Deserialize<Dictionary<int, Produto>>(jsonTexto, _opcoesSerializacao);
+        var produtos = JsonSerializer.Deserialize<List<Produto>>(jsonTexto, _opcoesSerializacao);
 
-        return produtos ?? new Dictionary<int, Produto>();
+        return produtos?.ToDictionary(p => p.ProdutoId) ?? new Dictionary<int, Produto>();
     }
 
     public void SalvarTodos(Dictionary<int, Produto> produtos)
@@ -45,7 +45,8 @@ public class ProdutoRepositoryJson : IProdutoRepository
         if (!string.IsNullOrEmpty(pasta)) Directory.CreateDirectory(pasta);
 
         string caminhoTemp = $"{_caminhoArquivo}.tmp";
-        string jsonTexto = JsonSerializer.Serialize(produtos, _opcoesSerializacao);
+
+        string jsonTexto = JsonSerializer.Serialize(produtos.Values, _opcoesSerializacao);
 
         File.WriteAllText(caminhoTemp, jsonTexto);
         File.Move(caminhoTemp, _caminhoArquivo, overwrite: true);

@@ -17,6 +17,7 @@ public class MenuPrincipal
     private int _pedidoId;
     private readonly PedidoServico _pedidoServico;
     private IReadOnlyCollection<ProdutoDto> Produtos => _pedidoServico.ListarProdutos();
+    private PedidoDetalheDto ProdutosPedido => _pedidoServico.ObterPedido(_pedidoId);
 
     public MenuPrincipal(PedidoServico pedidoServico)
     {
@@ -81,16 +82,17 @@ public class MenuPrincipal
                     _lista.Clear();
                     break;
                 case 2:
-
+                    ListarPedido();
+                    _pedidoServico.RemoverItem(_pedidoId, RemoverProduto());
                     break;
                 case 3:
-
+                    ListarPedido();
                     break;
                 case 4:
-
+                    _pedidoServico.FaturarPedido(_pedidoId);
                     break;
                 case 5:
-
+                    _pedidoServico.CancelarPedido(_pedidoId);
                     break;
                 default:
                     Console.WriteLine("Opção inválida.");
@@ -138,6 +140,22 @@ public class MenuPrincipal
             if (opcao == "0")
                 break;
         }
+    }
+
+    private void ListarPedido()
+    {
+        Console.WriteLine($"Pedido #{ProdutosPedido.PedidoId} | Status {ProdutosPedido.Status} | Total: R$ {ProdutosPedido.ValorBruto:C}");
+        foreach(var item in ProdutosPedido.Itens)
+        {
+            Console.WriteLine($" - [{item.ProdutoId}] {item.ProdutoNome} | Qtd: {item.Quantidade} | {item.SubTotal:C}");
+        }
+    }
+
+    private (int, int) RemoverProduto()
+    {
+        int produtoId = ConsoleInput.LerInteiro("Informe o ID do produto: ");
+        int produtoQuantidade = ConsoleInput.LerInteiro("Informe a quantidade que deseja remover do produto: ");
+        return (produtoId, produtoQuantidade);
     }
 
 }

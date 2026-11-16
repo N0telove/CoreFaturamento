@@ -100,6 +100,16 @@ public class Pedido
         Status = StatusPedido.Cancelado;
     }
 
+    public void FaturarPedido()
+    {
+        if (Status == StatusPedido.Cancelado)
+            throw new InvalidOperationException("Não é possível faturar um produto cancelado.");
+        if (Status == StatusPedido.Faturado)
+            throw new InvalidOperationException("O pedido já se encontra faturado.");
+
+        Status = StatusPedido.Faturado;
+    }
+
     public (decimal valorBruto, decimal valorDesconto, decimal valorLiquido) CalcularFaturamento(IDescontoStrategy estrategia)
     {
         Guard.Against.Null(estrategia);

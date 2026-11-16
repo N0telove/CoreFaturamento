@@ -11,6 +11,23 @@ namespace CoreFaturamento.Domain.Services;
 
 public class PedidoServico
 {
+    public record PedidoItemDto(
+        int PedidoItemId,
+        int ProdutoId,
+        string ProdutoNome,
+        int Quantidade,
+        decimal PrecoUnitarioVenda,
+        decimal SubTotal
+        );
+
+    public record PedidoDetalheDto(
+        int PedidoId,
+        DateTime DataPedido,
+        string Status,
+        decimal ValorBruto,
+        IReadOnlyCollection<PedidoItemDto> Itens
+        );
+
     public record ProdutoDto(
         int ProdutoId,
         string CodigoSKU,
@@ -18,6 +35,7 @@ public class PedidoServico
         decimal PrecoUnitario,
         int QuantidadeEstoque
         );
+
     private Dictionary<int, Produto> _catalogo;
     private Dictionary<int, Pedido> _pedidos;
     private readonly IProdutoRepository _produtoRepo;
@@ -32,6 +50,31 @@ public class PedidoServico
         _unitOfWork = Guard.Against.Null(unitOfWork, nameof(unitOfWork));
         _catalogo = produtoRepo.ObterTodos();
         _pedidos = pedidoRepo.ObterTodos();
+    }
+
+    public PedidoDetalheDto ObterPedido(int pedidoId)
+    {
+        if (!_pedidos.TryGetValue(pedidoId, out var pedido))
+            throw new InvalidOperationException($"Pedido {pedidoId} não encontrado.");
+
+        var itensDto = pedido.Itens
+            .Select(item => new PedidoItemDto(
+                item.PedidoItemId,
+                item.ProdutoId,
+                item.NomeProduto,
+                item.Quantidade,
+                item.PrecoUnitarioVenda,
+                item.SubTotal))
+            .ToList()
+            .AsReadOnly();
+
+        return new PedidoDetalheDto(
+            pedido.PedidoId,
+            pedido.DataPedido,
+            pedido.Status.ToString(),
+            pedido.ValorBruto,
+            itensDto
+        );
     }
 
     public IReadOnlyCollection<ProdutoDto> ListarProdutos() => _catalogo.Values.Select(p => new ProdutoDto(
@@ -58,7 +101,17 @@ public class PedidoServico
 
         PersistirOuReverter();
     }
-     
+
+    public void FaturarPedido(int pedidoId)
+    {
+        if (!_pedidos.TryGetValue(pedidoId, out var pedido))
+            throw new InvalidOperationException($"Pedido {pedidoId} não encontrado.");
+
+        pedido.FaturarPedido();
+
+        PersistirOuReverter();
+    }
+
     public int CriarPedido(List<(int ProdutoId, int Quantidade)> itensDesejados)
     {
 
@@ -125,6 +178,21 @@ public class PedidoServico
         PersistirOuReverter();
     }
 
+    public void RemoverItem(int pedidoId, (int produtoId, int quantidade) item)
+    {
+        
+        if (!_pedidos.TryGetValue(pedidoId, out var pedido))
+        {
+            throw new InvalidOperationException($"Pedido {pedidoId} não encontrado.");
+        }
+        if (!_catalogo.TryGetValue(item.produtoId, out var produto))
+        {
+            throw new InvalidOperationException($"Produto {item.produtoId} não encontrado.");
+        }
+
+        pedido.RemoverItem(produto, item.quantidade);
+        PersistirOuReverter();
+    }
     private void PersistirOuReverter()
     {
         try

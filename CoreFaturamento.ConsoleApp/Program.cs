@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 var config = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
     .Build();
 
 string pastaRelativa = Guard.Against.NullOrEmpty(config["ConfiguracoesPersistencia:PastaDados"], nameof(pastaRelativa));
