@@ -33,20 +33,28 @@ public class MenuPrincipal
             Console.WriteLine("1 - Criar Pedido");
             Console.WriteLine("0 - Sair");
             string? opcao = Console.ReadLine();
-            if (opcao == "1")
+
+            try
             {
-                ListarProdutos();
-                AdicionarProdutos();
-                _pedidoId = _pedidoServico.CriarPedido(_lista);
-                _lista.Clear();
-                break;
+                if (opcao == "1")
+                {
+                    ListarProdutos();
+                    AdicionarProdutos();
+                    _pedidoId = _pedidoServico.CriarPedido(_lista);
+                    _lista.Clear();
+                    break;
+                }
+                else if (opcao == "0")
+                {
+                    return;
+                }
+                else
+                    Console.WriteLine("Opção inválida.");
             }
-            else if (opcao == "0")
+            catch (InvalidOperationException ex)
             {
-                return;
-            }
-            else
-                Console.WriteLine("Opção inválida.");
+                ResponderExcecao(ex);
+            }    
         }
         Menu();
     }
@@ -69,34 +77,40 @@ public class MenuPrincipal
                 continue;
             }
 
-
-            switch (opcao)
+            try
             {
-                case 0:
-                    Console.WriteLine("Até logo.");
-                    return;
-                case 1:
-                    ListarProdutos();
-                    AdicionarProdutos();
-                    _pedidoServico.AdicionarItem(_pedidoId, _lista);
-                    _lista.Clear();
-                    break;
-                case 2:
-                    ListarPedido();
-                    _pedidoServico.RemoverItem(_pedidoId, RemoverProduto());
-                    break;
-                case 3:
-                    ListarPedido();
-                    break;
-                case 4:
-                    _pedidoServico.FaturarPedido(_pedidoId);
-                    break;
-                case 5:
-                    _pedidoServico.CancelarPedido(_pedidoId);
-                    break;
-                default:
-                    Console.WriteLine("Opção inválida.");
-                    break;
+                switch (opcao)
+                {
+                    case 0:
+                        Console.WriteLine("Até logo.");
+                        return;
+                    case 1:
+                        ListarProdutos();
+                        AdicionarProdutos();
+                        _pedidoServico.AdicionarItem(_pedidoId, _lista);
+                        _lista.Clear();
+                        break;
+                    case 2:
+                        ListarPedido();
+                        _pedidoServico.RemoverItem(_pedidoId, RemoverProduto());
+                        break;
+                    case 3:
+                        ListarPedido();
+                        break;
+                    case 4:
+                        _pedidoServico.FaturarPedido(_pedidoId);
+                        break;
+                    case 5:
+                        _pedidoServico.CancelarPedido(_pedidoId);
+                        break;
+                    default:
+                        Console.WriteLine("Opção inválida.");
+                        break;
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                ResponderExcecao(ex);
             }
         }
     }
@@ -147,7 +161,7 @@ public class MenuPrincipal
         Console.WriteLine($"Pedido #{ProdutosPedido.PedidoId} | Status {ProdutosPedido.Status} | Total: R$ {ProdutosPedido.ValorBruto:C}");
         foreach(var item in ProdutosPedido.Itens)
         {
-            Console.WriteLine($" - [{item.ProdutoId}] {item.ProdutoNome} | Qtd: {item.Quantidade} | {item.SubTotal:C}");
+            Console.WriteLine($" - [{item.ProdutoId}] {item.NomeProduto} | Qtd: {item.Quantidade} | {item.SubTotal:C}");
         }
     }
 
@@ -158,4 +172,11 @@ public class MenuPrincipal
         return (produtoId, produtoQuantidade);
     }
 
+    private void ResponderExcecao(InvalidOperationException ex)
+    {
+        _lista.Clear();
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"\nOperação não realizada: {ex.Message}");
+        Console.ResetColor();
+    }
 }
