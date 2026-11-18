@@ -1,5 +1,7 @@
 ﻿using Ardalis.GuardClauses;
 using CoreFaturamento.ConsoleApp.UI;
+using CoreFaturamento.Domain.Enums;
+using CoreFaturamento.Domain.Rules;
 using CoreFaturamento.Domain.Services;
 using CoreFaturamento.Infra.Persistence;
 using CoreFaturamento.Infra.Repositories;
@@ -22,7 +24,14 @@ var produtoRepo = new ProdutoRepositoryJson(caminhoProdutos);
 var pedidoRepo = new PedidoRepositoryJson(caminhoPedidos);
 var unitOfWork = new JsonUnitOfWork(produtoRepo, pedidoRepo, caminhoProdutos);
 
-var pedidoServico = new PedidoServico(produtoRepo, pedidoRepo, unitOfWork);
+var estrategias = new Dictionary<TipoDesconto, IDescontoStrategy>
+{
+    {TipoDesconto.SemDesconto, new SemDescontoStrategy() },
+    {TipoDesconto.Volume, new DescontoVolumeStrategy() },
+    {TipoDesconto.Parceria, new DescontoParceriaStrategy()}
+};
+
+var pedidoServico = new PedidoServico(produtoRepo, pedidoRepo, unitOfWork, estrategias);
 var interfaceUsuario = new MenuPrincipal(pedidoServico);
 
 try

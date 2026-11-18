@@ -1,6 +1,8 @@
 ﻿using Ardalis.GuardClauses;
+using CoreFaturamento.Domain.Enums;
 using CoreFaturamento.Domain.Interfaces;
 using CoreFaturamento.Domain.Models;
+using CoreFaturamento.Domain.Rules;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -11,10 +13,21 @@ namespace CoreFaturamento.Domain.Services;
 
 public class PedidoServico
 {
+    public record OpcaoDescontoDto(
+        TipoDesconto Tipo,
+        string Descricao);
+
+    public record FaturamentoDto(
+        int PedidoId,
+        decimal ValorBruto,
+        decimal ValorDesconto,
+        decimal ValorLiquido,
+        StatusPedido Status);
+
     public record PedidoItemDto(
         int PedidoItemId,
         int ProdutoId,
-        string ProdutoNome,
+        string NomeProduto,
         int Quantidade,
         decimal PrecoUnitarioVenda,
         decimal SubTotal
@@ -41,11 +54,17 @@ public class PedidoServico
     private readonly IProdutoRepository _produtoRepo;
     private readonly IPedidoRepository _pedidoRepo;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IReadOnlyDictionary<TipoDesconto, IDescontoStrategy> _estrategiasDesconto;
 
-    public PedidoServico(IProdutoRepository produtoRepo, IPedidoRepository pedidoRepo, IUnitOfWork unitOfWork)
+
+    public PedidoServico(IProdutoRepository produtoRepo,
+                        IPedidoRepository pedidoRepo,
+                        IUnitOfWork unitOfWork,
+                        IReadOnlyDictionary<TipoDesconto, IDescontoStrategy> estrategiasDesconto)
     {
         _produtoRepo = Guard.Against.Null(produtoRepo, nameof(produtoRepo));
         _pedidoRepo = Guard.Against.Null(pedidoRepo, nameof(pedidoRepo));
+        _estrategiasDesconto = Guard.Against.Null(estrategiasDesconto, nameof(estrategiasDesconto));
 
         _unitOfWork = Guard.Against.Null(unitOfWork, nameof(unitOfWork));
         _catalogo = produtoRepo.ObterTodos();
@@ -102,14 +121,30 @@ public class PedidoServico
         PersistirOuReverter();
     }
 
-    public void FaturarPedido(int pedidoId)
+    public IReadOnlyCollection<OpcaoDescontoDto> ListarOpcoesDesconto() =>
+            _estrategiasDesconto
+                .Select(par => new OpcaoDescontoDto(par.Key, par.Value.DescricaoDesconto))
+                .ToList()
+                .AsReadOnly();
+
+    public FaturamentoDto FaturarPedido(int pedidoId, TipoDesconto tipoDesconto)
     {
         if (!_pedidos.TryGetValue(pedidoId, out var pedido))
             throw new InvalidOperationException($"Pedido {pedidoId} não encontrado.");
+        if (!_estrategiasDesconto.TryGetValue(tipoDesconto, out var estrategia))
+            throw new InvalidOperationException("Modalidade de desconto inválida.");
+
+        var (valorBruto, valorDesconto, valorLiquido) = pedido.CalcularFaturamento(estrategia);
 
         pedido.FaturarPedido();
-
         PersistirOuReverter();
+
+        return new FaturamentoDto(
+            PedidoId: pedidoId,
+            ValorBruto: valorBruto,
+            ValorDesconto: valorDesconto,
+            ValorLiquido: valorLiquido,
+            Status: pedido.Status);
     }
 
     public int CriarPedido(List<(int ProdutoId, int Quantidade)> itensDesejados)

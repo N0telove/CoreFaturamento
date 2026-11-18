@@ -21,12 +21,12 @@ public class Pedido
 
     [JsonConstructor]
     private Pedido(int pedidoId, DateTime dataPedido, StatusPedido status,
-        List<PedidoItem>? itens)
+        IReadOnlyCollection<PedidoItem>? itens)
     {
         PedidoId = pedidoId;
         DataPedido = dataPedido;
         Status = status;
-        _itens = itens ?? new List<PedidoItem>();
+        _itens = itens?.ToList() ?? new List<PedidoItem>();
     }
 
     public Pedido(int pedidoId)
@@ -126,7 +126,6 @@ public class Pedido
         Guard.Against.OutOfRange(valorLiquido, nameof(valorLiquido), 0m, valorBruto, "Desconto Inválido.");
         decimal descontoCalculado = valorBruto - valorLiquido;
         
-        Status = StatusPedido.Faturado;
         return (valorBruto, descontoCalculado, valorLiquido);
     }
 

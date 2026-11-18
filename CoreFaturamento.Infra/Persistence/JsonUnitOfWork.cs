@@ -38,10 +38,17 @@ public class JsonUnitOfWork : IUnitOfWork
         }
         catch
         {
-            if (backupProdutos is not null)
-                File.WriteAllText(_caminhoProdutos, backupProdutos);
+            if (backupProdutos is not null) 
+            {
+                string caminhoTemp = $"{_caminhoProdutos}.tmp";
+                File.WriteAllText(caminhoTemp, backupProdutos);
+                File.Move(caminhoTemp, _caminhoProdutos, overwrite: true);
+
+            }
             else if (File.Exists(_caminhoProdutos))
+            {
                 File.Delete(_caminhoProdutos);
+            }
 
             throw;
         }

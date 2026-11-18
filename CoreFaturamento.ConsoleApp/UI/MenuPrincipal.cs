@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 using static CoreFaturamento.Domain.Services.PedidoServico;
+using CoreFaturamento.Domain.Enums;
 
 namespace CoreFaturamento.ConsoleApp.UI;
 
@@ -98,7 +99,8 @@ public class MenuPrincipal
                         ListarPedido();
                         break;
                     case 4:
-                        _pedidoServico.FaturarPedido(_pedidoId);
+                        var recibo = _pedidoServico.FaturarPedido(_pedidoId, EscolherDesconto());
+                        VisualizarRecibo(recibo);
                         break;
                     case 5:
                         _pedidoServico.CancelarPedido(_pedidoId);
@@ -177,6 +179,36 @@ public class MenuPrincipal
         _lista.Clear();
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"\nOperação não realizada: {ex.Message}");
+        Console.ResetColor();
+    }
+
+    private TipoDesconto EscolherDesconto()
+    {
+        var opcoes = _pedidoServico.ListarOpcoesDesconto();
+
+        Console.WriteLine("Descontos disponíveis: ");
+        foreach (var opcao in opcoes)
+        {
+            Console.WriteLine($"{(int)opcao.Tipo} - {opcao.Descricao}");
+        }
+
+        while (true)
+        {
+            int escolha = ConsoleInput.LerInteiro("Escolha a modalidade de desconto: ");
+            if (Enum.IsDefined(typeof(TipoDesconto), escolha))
+                return (TipoDesconto)escolha;
+
+            Console.WriteLine("Modalidade inválida. Tente novamente.");
+        }
+    }
+
+    private void VisualizarRecibo(FaturamentoDto recibo)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"\nPedido #{recibo.PedidoId} faturado com sucesso!");
+        Console.WriteLine($"Valor Bruto:    {recibo.ValorBruto:C}");
+        Console.WriteLine($"Desconto:       {recibo.ValorDesconto:C}");
+        Console.WriteLine($"Valor Líquido:  {recibo.ValorLiquido:C}");
         Console.ResetColor();
     }
 }

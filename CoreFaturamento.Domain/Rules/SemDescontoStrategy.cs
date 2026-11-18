@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CoreFaturamento.Domain.Rules;
 
-public class SemDescontoStrategy : IDescontoStrategy
+public class SemDescontoStrategy : DescontoBase
 {
-    public decimal Calcular(decimal valorTotalBruto) => valorTotalBruto;
+    public override decimal Percentual => 0m;
 }

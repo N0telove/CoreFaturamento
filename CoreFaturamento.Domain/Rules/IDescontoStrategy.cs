@@ -6,5 +6,7 @@ namespace CoreFaturamento.Domain.Rules;
 
 public interface IDescontoStrategy
 {
-    decimal Calcular(decimal valorTotalBruto);
+    decimal Percentual { get; }
+    string DescricaoDesconto { get; }
+    decimal Calcular(decimal valorOriginal);
 }
